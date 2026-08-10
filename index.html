@@ -126,6 +126,7 @@
   </details>
 
   <button class="reset-btn" id="resetBtn">borrar datos de hoy</button>
+  <div class="reset-btn" style="margin-top:4px;opacity:.6;">datos guardados en este navegador/dispositivo</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -145,17 +146,17 @@ function todayKey(offset=0){
   return d.toISOString().slice(0,10);
 }
 
-function storageKey(dateKey){ return 'habitlog:' + dateKey; }
+function storageKey(dateKey){ return 'ancla:habitlog:' + dateKey; }
 
 async function getLog(dateKey){
   try{
-    const res = await window.storage.get(storageKey(dateKey));
-    return res ? JSON.parse(res.value) : {};
+    const raw = localStorage.getItem(storageKey(dateKey));
+    return raw ? JSON.parse(raw) : {};
   }catch(e){ return {}; }
 }
 
 async function setLog(dateKey, log){
-  try{ await window.storage.set(storageKey(dateKey), JSON.stringify(log)); }
+  try{ localStorage.setItem(storageKey(dateKey), JSON.stringify(log)); }
   catch(e){ console.error('storage error', e); }
 }
 
