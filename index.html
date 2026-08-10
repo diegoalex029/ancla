@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ancla</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+
+  :root{
+    --bg: #191d17;
+    --bg-soft: #21261e;
+    --card: #262c22;
+    --card-border: #343c2c;
+    --ember: #e08d3c;
+    --ember-dim: #7a5527;
+    --sage: #7fa079;
+    --sage-dim: #3e5240;
+    --text: #f1efe4;
+    --text-muted: #a3ab97;
+    --text-faint: #6b7362;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  .wrap{max-width:480px;margin:0 auto;padding:28px 20px 60px;}
+
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);margin-bottom:6px;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:28px;margin:0 0 2px;letter-spacing:-.01em;}
+  .sub{color:var(--text-muted);font-size:14px;margin-bottom:28px;}
+
+  /* Jar signature element */
+  .jar-zone{display:flex;flex-direction:column;align-items:center;margin:8px 0 32px;}
+  .jar-label{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);margin-top:10px;letter-spacing:.04em;}
+  .jar-count{font-family:'Fraunces',serif;font-size:15px;color:var(--ember);margin-top:2px;}
+
+  .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--ember);color:#191d17;font-weight:600;font-size:14px;padding:10px 18px;border-radius:10px;opacity:0;transition:all .35s ease;pointer-events:none;z-index:50;font-family:'Inter',sans-serif;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .section-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin:30px 0 12px;}
+
+  .habit{
+    display:flex;align-items:center;gap:14px;
+    background:var(--card);border:1px solid var(--card-border);border-radius:14px;
+    padding:14px 16px;margin-bottom:10px;cursor:pointer;user-select:none;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .habit:active{transform:scale(.99);}
+  .habit.done{border-color:var(--sage);background:linear-gradient(180deg, rgba(127,160,121,0.14), rgba(127,160,121,0.05));}
+  .habit-icon{font-size:22px;width:30px;text-align:center;flex-shrink:0;}
+  .habit-body{flex:1;min-width:0;}
+  .habit-label{font-size:15px;font-weight:500;}
+  .habit-tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-faint);margin-top:2px;}
+  .habit-check{
+    width:24px;height:24px;border-radius:7px;border:1.5px solid var(--card-border);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s ease;
+  }
+  .habit.done .habit-check{background:var(--sage);border-color:var(--sage);}
+  .habit-check svg{opacity:0;transition:opacity .15s ease;width:14px;height:14px;}
+  .habit.done .habit-check svg{opacity:1;}
+
+  .week{display:flex;gap:6px;margin-bottom:6px;}
+  .week-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .week-day-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint);}
+  .week-bar{width:100%;height:54px;background:var(--card);border:1px solid var(--card-border);border-radius:8px;position:relative;overflow:hidden;}
+  .week-bar-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,var(--ember),var(--sage));transition:height .4s ease;}
+  .week-day-today .week-bar{border-color:var(--ember);}
+
+  details{background:var(--bg-soft);border:1px solid var(--card-border);border-radius:14px;margin-top:28px;overflow:hidden;}
+  summary{padding:14px 16px;font-size:14px;font-weight:500;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;}
+  summary::-webkit-details-marker{display:none;}
+  summary:after{content:'+';font-family:'JetBrains Mono',monospace;color:var(--ember);font-size:18px;}
+  details[open] summary:after{content:'−';}
+  .setup-body{padding:2px 16px 18px;color:var(--text-muted);font-size:13.5px;line-height:1.6;}
+  .setup-body ol{padding-left:18px;margin:8px 0;}
+  .setup-body li{margin-bottom:8px;}
+  .url-box{background:var(--bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ember);margin:6px 0 12px;word-break:break-all;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .copy-btn{background:var(--card);border:1px solid var(--card-border);color:var(--text-muted);font-family:'Inter',sans-serif;font-size:11px;padding:5px 9px;border-radius:6px;cursor:pointer;flex-shrink:0;}
+  .copy-btn:active{background:var(--ember-dim);}
+
+  .reset-btn{margin-top:24px;background:none;border:none;color:var(--text-faint);font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;padding:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow" id="dateLabel">—</div>
+  <h1>Ancla</h1>
+  <div class="sub">Objetos reales, hábitos que sí se quedan.</div>
+
+  <div class="jar-zone">
+    <svg width="120" height="150" viewBox="0 0 120 150" id="jarSvg">
+      <defs>
+        <clipPath id="jarClip">
+          <path d="M30 20 Q30 12 40 12 L80 12 Q90 12 90 20 L92 40 L100 128 Q100 142 84 142 L36 142 Q20 142 20 128 L28 40 Z"/>
+        </clipPath>
+      </defs>
+      <path d="M30 20 Q30 12 40 12 L80 12 Q90 12 90 20 L92 40 L100 128 Q100 142 84 142 L36 142 Q20 142 20 128 L28 40 Z"
+            fill="var(--card)" stroke="var(--card-border)" stroke-width="2"/>
+      <rect x="38" y="4" width="44" height="12" rx="4" fill="var(--card-border)"/>
+      <g clip-path="url(#jarClip)" id="jarDots"></g>
+      <path d="M30 20 Q30 12 40 12 L80 12 Q90 12 90 20 L92 40 L100 128 Q100 142 84 142 L36 142 Q20 142 20 128 L28 40 Z"
+            fill="none" stroke="var(--card-border)" stroke-width="2"/>
+    </svg>
+    <div class="jar-label">FRASCO DE HOY</div>
+    <div class="jar-count" id="jarCount">0 / 5</div>
+  </div>
+
+  <div class="section-title">Check-in de hoy</div>
+  <div id="habitList"></div>
+
+  <div class="section-title">Últimos 7 días</div>
+  <div class="week" id="weekView"></div>
+
+  <details>
+    <summary>Conectar objetos físicos (NFC)</summary>
+    <div class="setup-body">
+      <p>Cada hábito se puede activar tocando un objeto real con el celular, usando un tag NFC programado.</p>
+      <ol>
+        <li>Consigue tags NFC tipo <b>NTAG213</b> (búscalos en Mercado Libre o Amazon, son económicos).</li>
+        <li>Instala la app gratuita <b>NFC Tools</b> (Android o iOS).</li>
+        <li>Publica esta app (botón compartir/publicar del artifact) y copia su enlace.</li>
+        <li>En NFC Tools → Escribir → Añadir un registro → URL/URI. Pega tu enlace y agrégale el parámetro del hábito que quieres, por ejemplo:</li>
+      </ol>
+      <div id="tagUrls"></div>
+      <p>Acerca el celular al tag para grabarlo, luego pega el tag al objeto (frasco, dado, tapete de meditación, etc). La próxima vez que lo toques con el celular, el hábito se marca solo.</p>
+    </div>
+  </details>
+
+  <button class="reset-btn" id="resetBtn">borrar datos de hoy</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const HABITS = [
+  {id:'sueno', label:'Dormiste 7–8h', icon:'🌙'},
+  {id:'luz', label:'Luz natural al despertar', icon:'☀️'},
+  {id:'ejercicio', label:'Ejercicio / cardio', icon:'🏃'},
+  {id:'meditacion', label:'Meditación', icon:'🧘'},
+  {id:'foco', label:'Bloque de foco completado', icon:'🎯'},
+];
+
+function todayKey(offset=0){
+  const d = new Date();
+  d.setDate(d.getDate() - offset);
+  return d.toISOString().slice(0,10);
+}
+
+function storageKey(dateKey){ return 'habitlog:' + dateKey; }
+
+async function getLog(dateKey){
+  try{
+    const res = await window.storage.get(storageKey(dateKey));
+    return res ? JSON.parse(res.value) : {};
+  }catch(e){ return {}; }
+}
+
+async function setLog(dateKey, log){
+  try{ await window.storage.set(storageKey(dateKey), JSON.stringify(log)); }
+  catch(e){ console.error('storage error', e); }
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function renderJar(count, total){
+  const g = document.getElementById('jarDots');
+  g.innerHTML = '';
+  const cols = 5, rows = 4;
+  const dots = [];
+  for(let i=0;i<20;i++) dots.push(i);
+  const fillCount = Math.round((count/total) * 20);
+  dots.forEach((i)=>{
+    const col = i % cols, row = Math.floor(i/cols);
+    const x = 30 + col * 13 + (row%2===0?0:6);
+    const y = 132 - row * 13;
+    const active = i < fillCount;
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', x);
+    circle.setAttribute('cy', y);
+    circle.setAttribute('r', active ? 5 : 4);
+    circle.setAttribute('fill', active ? (i % 2 === 0 ? 'var(--ember)' : 'var(--sage)') : 'var(--bg-soft)');
+    circle.setAttribute('opacity', active ? '0.95' : '0.4');
+    g.appendChild(circle);
+  });
+  document.getElementById('jarCount').textContent = count + ' / ' + total;
+}
+
+async function renderHabits(){
+  const dateKey = todayKey(0);
+  const log = await getLog(dateKey);
+  const list = document.getElementById('habitList');
+  list.innerHTML = '';
+  let doneCount = 0;
+  HABITS.forEach(h=>{
+    const done = !!log[h.id];
+    if(done) doneCount++;
+    const el = document.createElement('div');
+    el.className = 'habit' + (done ? ' done' : '');
+    el.innerHTML = `
+      <div class="habit-icon">${h.icon}</div>
+      <div class="habit-body">
+        <div class="habit-label">${h.label}</div>
+        <div class="habit-tag">tag: ?${h.id}=1</div>
+      </div>
+      <div class="habit-check">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#191d17" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>`;
+    el.addEventListener('click', async ()=>{
+      const current = await getLog(dateKey);
+      current[h.id] = !current[h.id];
+      await setLog(dateKey, current);
+      renderHabits();
+      renderWeek();
+    });
+    list.appendChild(el);
+  });
+  renderJar(doneCount, HABITS.length);
+}
+
+async function renderWeek(){
+  const week = document.getElementById('weekView');
+  week.innerHTML = '';
+  const dayNames = ['D','L','M','M','J','V','S'];
+  for(let offset=6; offset>=0; offset--){
+    const dateKey = todayKey(offset);
+    const log = await getLog(dateKey);
+    const doneCount = HABITS.filter(h=>log[h.id]).length;
+    const pct = Math.round((doneCount/HABITS.length)*100);
+    const d = new Date(); d.setDate(d.getDate()-offset);
+    const dayLetter = dayNames[d.getDay()];
+    const isToday = offset===0;
+    const col = document.createElement('div');
+    col.className = 'week-day' + (isToday ? ' week-day-today' : '');
+    col.innerHTML = `
+      <div class="week-bar"><div class="week-bar-fill" style="height:${pct}%"></div></div>
+      <div class="week-day-label">${dayLetter}</div>`;
+    week.appendChild(col);
+  }
+}
+
+function renderTagUrls(){
+  const box = document.getElementById('tagUrls');
+  box.innerHTML = '';
+  const base = window.location.origin + window.location.pathname;
+  HABITS.forEach(h=>{
+    const url = base + '?' + h.id + '=1';
+    const row = document.createElement('div');
+    row.className = 'url-box';
+    row.innerHTML = `<span>${url}</span><button class="copy-btn" data-url="${url}">copiar</button>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('.copy-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      navigator.clipboard?.writeText(btn.dataset.url);
+      btn.textContent = '✓';
+      setTimeout(()=>btn.textContent='copiar', 1200);
+    });
+  });
+}
+
+async function handleIncomingTag(){
+  const params = new URLSearchParams(window.location.search);
+  const matched = HABITS.find(h => params.get(h.id) === '1');
+  if(matched){
+    const dateKey = todayKey(0);
+    const log = await getLog(dateKey);
+    log[matched.id] = true;
+    await setLog(dateKey, log);
+    showToast('✓ ' + matched.label + ' — registrado vía objeto físico');
+    history.replaceState({}, '', window.location.pathname);
+  }
+}
+
+function renderDate(){
+  const opts = { weekday:'long', day:'numeric', month:'long' };
+  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('es-CO', opts).toUpperCase();
+}
+
+document.getElementById('resetBtn').addEventListener('click', async ()=>{
+  await setLog(todayKey(0), {});
+  renderHabits();
+  renderWeek();
+});
+
+(async function init(){
+  renderDate();
+  renderTagUrls();
+  await handleIncomingTag();
+  await renderHabits();
+  await renderWeek();
+})();
+</script>
+</body>
+</html>
